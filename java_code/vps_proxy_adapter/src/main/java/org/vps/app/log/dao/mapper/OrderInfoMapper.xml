@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.vps.app.log.dao.mapper.OrderInfoMapper" >
+    
+    <resultMap id="BaseResultMap" type="org.vps.app.log.dao.modle.OrderInfo" >
+        <result column="order_id" property="orderId" />
+        <result column="user_id" property="userId" />
+        <!--<result column="product_id" property="productId" />-->
+        <result column="concurrent_users" property="concurrentUsers" />
+        <result column="flow_number" property="flowNumber" />
+        <!--<result column="pay_type" property="payType" />-->
+        <!--<result column="trande_no" property="trandeNo" />-->
+        <!--<result column="order_status" property="orderStatus" />-->
+        <result column="order_expiry_date" property="orderExpiryDate" />
+        <result column="order_fail_message" property="orderFailMessage" />
+        <!--<result column="order_create_time" property="orderCreateTime" />-->
+        <!--<result column="pay_time" property="payTime" />-->
+    </resultMap>
+    
+    <sql id="Base_Column_List" >
+
+        order_id, user_id,  concurrent_users, flow_number, order_expiry_date
+    </sql>
+
+
+    <select id="getOrderById" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List" />
+        from
+        order_info where order_status = 1 and order_id = #{orderId}
+    </select>
+</mapper>

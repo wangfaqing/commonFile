@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+            http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans.xsd" >
+
+	<bean id="appConfigStatic" class="org.vps.app.config.ConfigStatic" lazy-init="default" >
+		<property name="vpsProxyPort" value="${vps.proxy.port}" />
+		<property name="servicePort" value="${vps.service.port}" />
+	</bean>
+	
+	<bean id="appConfigDynamic" class="org.vps.app.config.ConfigDynamic" lazy-init="default" >
+        <property name="logWriteFile" value="${log.write.file}" />
+        <property name="logWriteDB" value="${log.write.db}" />
+    </bean>
+
+    <bean id="serviceConfigStatic" class="org.vps.service.config.ConfigStatic" lazy-init="default" >
+        <property name="vpsProxyPort" value="${vps.proxy.port}" />
+        <property name="vpsProxySocks5Port" value="${vps.proxy.socks5.port}" />
+    </bean>
+    
+    <bean id="serviceConfigDynamic" class="org.vps.service.config.ConfigDynamic" lazy-init="default" >
+        <property name="strProxyHttpHostList" value="${proxy.http.host.list}" />
+        <property name="strProxySocks5HostList" value="${proxy.socks5.host.list}" />
+    </bean>
+    
+	<!-- A.配置调度的任务对应bean的id和自定义class-->  
+    <bean id="myQuartz" class="org.vps.app.QuartzTimmer" />
+    
+    <!-- B.配置调度任务对应的bean的id和执行的方法,作业不并发调度-->  
+    <bean id="myDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+	    <property name="targetObject" ref="myQuartz" />  
+	    <property name="targetMethod" value="tips" />  
+	    <property name="concurrent" value="false" />  
+    </bean>
+      
+    <!-- C.配置调度任务执行的触发的时间-->  
+    <bean id="myTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">  
+        <property name="jobDetail" ref="myDetail" />  
+        <property name="cronExpression">  
+            <!-- 每分钟的第3秒执行任务调度 -->  
+            <value>3 * * * * ?</value>  
+        </property>  
+    </bean>
+    
+    <!-- D.Quartz的调度工厂，调度工厂只能有一个，多个调度任务在list中添加 -->  
+    <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">  
+        <property name="triggers">  
+            <list>  
+                <!-- 所有的调度列表-->  
+                <ref bean="myTrigger" />  
+	            <!-- 
+	            <ref bean="myTrigger1" />  
+	            <ref bean="myTrigger2" />  
+	                                            对应的bean配置：id="myDetail1" 和 id="myTrigger2" 可以对应的并行多配置-对应执行JavaBean和执行时间(各自触发time)  
+	            -->  
+            </list>  
+        </property>  
+    </bean> 
+    
+    <!-- proxyUsed日志写数据库执行对象 -->
+    <bean id="proxySessionLogExecution" class="org.vps.app.log.ProxySessionLogExecution">
+    </bean>
+    
+    <!-- proxySession日志写数据库队列 -->
+    <bean id="proxySessionLogBuffer" class="edu.hziee.common.queue.DelayExecuteBuffer"
+        init-method="start" destroy-method="flush">
+        <property name="name" value="proxySessionLogBuffer" />
+        <property name="poolSize" value="${data.record.cached.count}" />
+        <property name="batchSize" value="${data.record.batch.size}" />
+        <property name="checkInterval" value="${data.record.check.interval}" />
+        <property name="batchExecutor" ref="proxySessionLogExecution" />
+    </bean>
+    
+</beans>

@@ -1,0 +1,22 @@
+﻿release 1.6.4.2
+1.增加一个服务存活接口
+
+release 1.6.4.1
+1.pom文件修改项目名称
+
+release 1.6.4
+1.增加http和socks5代理服务器选择中转
+
+
+release 1.6.3
+1.关闭isConnectHode 的两条warn日志
+2.关闭proxyChannelClose 的warn日志
+
+release 1.6.2
+1.修复Socks5协议，客户端不按协议多发字节，引起服务内存泄露BUG
+
+release 1.6.1
+1.增加socks5代理直接转发功能
+2.修复数据转发功能，发送数据后连接异常断开BUG
+3.修改login请求处理时取post数据方式，功能无修改
+4.

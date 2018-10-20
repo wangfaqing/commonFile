@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap 
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+	"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="qyMethodLog">
+	<insert id="INSERT_METHOD_LOG" parameterClass="com.qy.methodlog.domain.MethodLog">
+		INSERT INTO qy_method_log_$currentDate$ (
+			server_name,
+			method_name,
+			params,
+			cost_time,
+			create_time,
+			exception
+		)
+		VALUES(
+			#serverName#,
+			#methodName#,
+			#params#,
+			#costTime#,
+			#createTime#,
+			#exception#
+		)
+	</insert>
+	
+	
+</sqlMap>

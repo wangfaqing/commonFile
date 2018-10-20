@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.vps.app.log.dao.mapper.UserInfoMapper" >
+    
+    <resultMap id="BaseResultMap" type="org.vps.app.log.dao.modle.UserInfo" >
+        <result column="id" property="id" />
+        <result column="mobile" property="mobile" />
+        <result column="secret" property="secret" />
+        <result column="accout_status" property="accoutStatus" />
+    </resultMap>
+    
+    <sql id="Base_Column_List" >
+        id, mobile, secret, accout_status
+    </sql>
+
+    <select id="getSecretById" resultType="java.lang.String">
+        select secret from user_info where account_status = 1 and id = #{userId}
+    </select>
+</mapper>

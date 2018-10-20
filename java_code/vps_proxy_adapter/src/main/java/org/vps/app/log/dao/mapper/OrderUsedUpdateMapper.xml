@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.vps.app.log.dao.mapper.OrderUsedUpdateMapper" >
+    
+    <update id="updateOrderUsed" parameterType="org.vps.app.log.dao.modle.OrderUsed">
+        update 
+            qy_vps_proxy_public_order_used 
+        set 
+            flow_used = flow_used + #{flow}, 
+            req_used = req_used + #{req} 
+        where 
+            order_id = #{orderId};
+    </update>
+  
+</mapper>

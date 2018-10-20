@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:tool="http://www.springframework.org/schema/tool" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd  
+     http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd  
+     http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd  
+     http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd  
+     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd  
+     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd  
+     http://www.springframework.org/schema/tool http://www.springframework.org/schema/tool/spring-tool.xsd"
+	default-lazy-init="true" default-autowire="byName">
+	
+	 <aop:config proxy-target-class="true">
+		<aop:aspect id="methodAspect" ref="methodAspectBean">
+			<aop:pointcut id="analysisPointCut" expression="${methodLogAspectExpression}" />
+			<aop:around pointcut-ref="analysisPointCut" method="doAround" />
+			<aop:after-throwing pointcut-ref="analysisPointCut"
+				method="doThrowing" throwing="ex" />
+		</aop:aspect>
+	</aop:config>
+	
+	
+	<bean id="methodAspectBean" class="com.qy.methodlog.aop.MethodPerformanceAspect" init-method="start">
+		<property name="alertTime" value="${alertTime}"></property>
+		<property name="serverName" value="${serverName}"></property>
+		<property name="statisticsInterval" value="${statisticsInterval}"></property>
+	</bean>
+
+	<bean id="methodLogDao" parent="baseDAO" class="com.qy.methodlog.dao.MethodLogDao">
+		<property name="defaultDB">
+			<bean class="edu.hziee.common.dbroute.config.DBRoute">
+				<constructor-arg value="methodLogDB" />
+			</bean>
+		</property>
+	</bean>
+
+	
+	
+	<bean id="methodStatisticsLogDao" parent="baseDAO" class="com.qy.methodlog.dao.MethodStatisticsLogDao">
+		<property name="defaultDB">
+			<bean class="edu.hziee.common.dbroute.config.DBRoute">
+				<constructor-arg value="methodLogDB" />
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="methodStatisticsLogBuffer" class="com.qy.methodlog.dao.QyDelayExecuteBuffer"
+		init-method="start" destroy-method="flush">
+		<property name="name" value="methodStatisticsLogBuffer" />
+		<property name="poolSize" value="${data.record.cached.count}" />
+		<property name="batchSize" value="${data.record.batch.size}" />
+		<property name="checkInterval" value="${data.record.check.interval}" />
+		<property name="batchExecutor" ref="methodStatisticsLogDao" />
+	</bean>
+
+	<bean id="methodLogBuffer" class="com.qy.methodlog.dao.QyDelayExecuteBuffer"
+		init-method="start" destroy-method="flush">
+		<property name="name" value="methodLogBuffer" />
+		<property name="poolSize" value="${data.record.cached.count}" />
+		<property name="batchSize" value="${data.record.batch.size}" />
+		<property name="checkInterval" value="${data.record.check.interval}" />
+		<property name="batchExecutor" ref="methodLogDao" />
+	</bean>
+
+
+
+
+	<bean id="methodLogDataSource" class="com.alibaba.druid.pool.DruidDataSource"
+		abstract="false" lazy-init="false" autowire="default" destroy-method="close">
+		<property name="url" value="${methodLog.jdbc.url}" />
+		<property name="username" value="${methodLog.jdbc.username}" />
+		<property name="password" value="${methodLog.jdbc.password}" />
+		<property name="filters" value="stat" />
+
+		<property name="maxActive" value="${methodLog.jdbc.maxPoolSize}" />
+		<property name="initialSize" value="1" />
+		<property name="maxWait" value="60000" />
+		<property name="minIdle" value="1" />
+
+		<property name="timeBetweenEvictionRunsMillis" value="60000" />
+		<property name="minEvictableIdleTimeMillis" value="300000" />
+
+		<property name="validationQuery" value="SELECT 'x'" />
+		<property name="testWhileIdle" value="true" />
+		<property name="testOnBorrow" value="false" />
+		<property name="testOnReturn" value="false" />
+		<property name="poolPreparedStatements" value="true" />
+		<property name="maxPoolPreparedStatementPerConnectionSize"
+			value="20" />
+
+	</bean>
+
+
+	<bean id="methodLogSqlMapDB" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocations">
+			<list>
+				<value>classpath:ibatis/sqlmap-config.xml</value>
+			</list>
+		</property>
+		<property name="dataSource">
+			<ref bean="methodLogDataSource" />
+		</property>
+	</bean>
+
+	
+	
+	<!-- 数据库路由规则配置 -->
+	<bean id="dbRouteConfig" class="edu.hziee.common.dbroute.config.DBRouteConfig">
+		<property name="sqlMapList">
+			<map>
+
+				<entry key="methodLogDB">
+					<ref bean="methodLogSqlMapDB" />
+				</entry>
+
+			</map>
+		</property>
+		<property name="defaultNodeNameList">
+			<list>
+				<value>methodLogDB</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="methodLogDB" class="edu.hziee.common.dbroute.config.DBRoute">
+		<constructor-arg value="methodLogSqlMapDB" />
+	</bean>
+
+	<bean id="baseDAO" abstract="true" class="edu.hziee.common.dbroute.BaseDAO">
+		<property name="dbRouteConfig" ref="dbRouteConfig" />
+		<property name="defaultDB" ref="methodLogDB" />
+	</bean>
+
+	 <bean id="druid-stat-interceptor"
+	    class="com.alibaba.druid.support.spring.stat.DruidStatInterceptor">
+	  </bean>
+	
+	<bean id="druid-stat-pointcut" class="org.springframework.aop.support.JdkRegexpMethodPointcut"
+	    scope="prototype">
+	    <property name="patterns">
+	        <list>
+	            <value>org.vps.app.service.impl.*</value>
+	        </list>
+	    </property>
+	</bean>
+	
+	<aop:config>
+	    <aop:advisor advice-ref="druid-stat-interceptor"
+	        pointcut-ref="druid-stat-pointcut" />
+	</aop:config>
+	
+</beans>
